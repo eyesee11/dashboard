@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin's Project Management Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000000;
+            margin: 0;
+            padding: 20px;
+        }
+        nav {
+            background: #363636;
+            width: 280px;
+            box-shadow: 0 20px 35px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            margin: 20px 10px;
+ 
+        }
+
+        .logo i {
+            font-size: 24px;
+            margin-right: 15px;
+            color: #ffffff;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav ul li {
+            margin: 10px 0;
+        }
+
+        nav a {
+            color: #ffffff;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        nav a i {
+            margin-right: 10px;
+        }
+
+        nav a:hover {
+            background: #eee;
+            color: #000;
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"], input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #5a5a5a;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #5a5a5a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .status-button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+        .not-started {
+            background-color: #dc3545;
+        }
+        .in-progress {
+            background-color: #737373;
+            
+        }
+        .completed {
+            background-color: #28a745;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="logo">
+            <i class="fas fa-user-shield"></i>
+            <span style="color: white;">Admin Dashboard</span>
+        </div>
+        <ul>
+            <li><a href="admin.html"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="admAttendance.html"><i class="fas fa-users"></i> Attendance</a></li>
+            <li><a href="admProject.html"><i class="fas fa-chart-line"></i> Analytics</a></li>
+            <li><a href="index.html"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1>Project Management System</h1>
+        <h2>Add Project</h2>
+        <form id="projectForm">
+            <label for="projectName">Project Name:</label>
+            <input type="text" id="projectName" name="projectName" required>
+            <label for="assignee">Assignee:</label>
+            <input type="text" id="assignee" name="assignee" required>
+            <label for="deadline">Deadline:</label>
+            <input type="date" id="deadline" name="deadline" required>
+            <button type="submit">Assign Project</button>
+        </form>
+
+        <h2>Project Records</h2>
+        <table id="projectTable">
+            <thead>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Assignee</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        window.onload = function() {
+            displayRecords();
+        };
+
+        document.getElementById('projectForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const projectName = document.getElementById('projectName').value;
+            const assignee = document.getElementById('assignee').value;
+            const deadline = document.getElementById('deadline').value;
+            const status = 'Not Started';
+            const project = { projectName, assignee, deadline, status };
+            let projects = JSON.parse(localStorage.getItem('projectRecords')) || [];
+            projects.push(project);
+            localStorage.setItem('projectRecords', JSON.stringify(projects));
+            displayRecords();
+            document.getElementById('projectForm').reset();
+        });
+
+        function displayRecords() {
+            const tableBody = document.querySelector('#projectTable tbody');
+            tableBody.innerHTML = '';
+            let projects = JSON.parse(localStorage.getItem('projectRecords')) || [];
+            projects.forEach((project, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${project.projectName}</td>
+                    <td>${project.assignee}</td>
+                    <td>${project.deadline}</td>
+                    <td>
+                        <button class="status-button ${project.status.toLowerCase().replace(/ /g, '-')}" onclick="changeStatus(${index})">${project.status}</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function changeStatus(index) {
+            let projects = JSON.parse(localStorage.getItem('projectRecords'));
+            const currentStatus = projects[index].status;
+            switch (currentStatus) {
+                case 'Not Started':
+                    projects[index].status = 'In Progress';
+                    break;
+                case 'In Progress':
+                    projects[index].status = 'Completed';
+                    break;
+                case 'Completed':
+                    projects[index].status = 'Not Started';
+                    break;
+            }
+            localStorage.setItem('projectRecords', JSON.stringify(projects));
+            displayRecords();
+        }
+    </script>
+</body>
+</html>
